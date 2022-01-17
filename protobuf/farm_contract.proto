@@ -1,0 +1,211 @@
+syntax = "proto3";
+
+import "aelf/core.proto";
+import "aelf/options.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option csharp_namespace = "Awaken.Contracts.Farm";
+
+// the contract definition: a gRPC service definition.
+service FarmContract {
+
+    // the full name of the C# class that will contain the state (here <namespace>.<state-class-name> format).
+    option (aelf.csharp_state) = "FarmContractState";
+    // admin action
+    rpc Initialize (InitializeInput) returns (google.protobuf.Empty) {}
+    rpc SetHalvingPeriod (SetHalvingPeriodInput) returns (google.protobuf.Empty) {}
+    rpc SetDistributeTokenPerBlock (SetDistributeTokenPerBlockInput) returns (google.protobuf.Empty) {}
+    rpc AddPool(AddPoolInput) returns (google.protobuf.Empty) {}
+    rpc SetReDeposit(SetReDepositInput) returns (google.protobuf.Empty) {}
+    rpc SetTool(aelf.Address) returns (google.protobuf.Empty) {}
+    rpc SetOwner(aelf.Address) returns (google.protobuf.Empty) {}
+    rpc SetAdmin(aelf.Address) returns (google.protobuf.Empty) {}
+    rpc NewReward(NewRewardInput) returns (google.protobuf.Empty) {}
+    // user action
+    rpc Deposit(DepositInput) returns (google.protobuf.Empty) {}
+    rpc Withdraw(WithdrawInput) returns (google.protobuf.Empty) {}
+    rpc ReDeposit(ReDepositInput) returns (google.protobuf.Empty) {}
+    rpc MassUpdatePools(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc UpdatePool(google.protobuf.Int32Value) returns (google.protobuf.Empty) {}
+    rpc FixEndBlock(google.protobuf.BoolValue) returns (google.protobuf.Empty) {}
+    // view 
+    rpc Pending(PendingInput) returns(PendingOutput){}
+    rpc GetReDepositLimit(GetReDepositLimitInput) returns(google.protobuf.Int64Value){}   
+    rpc GetDistributeTokenBlockReward(google.protobuf.Int64Value) returns (GetDistributeTokenBlockRewardOutput) {}
+    rpc PendingLockDistributeToken(PendingLockDistributeTokenInput)returns(google.protobuf.Int64Value){}
+    rpc GetAdmin(google.protobuf.Empty) returns (aelf.Address) {}      
+    rpc GetOwner(google.protobuf.Empty) returns (aelf.Address) {}      
+    rpc GetStartBlockOfDistributeToken(google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
+    rpc GetDistributeTokenPerBlockConcentratedMining (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
+    rpc GetDistributeTokenPerBlockContinuousMining (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
+    rpc GetUsdtPerBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){}  
+    rpc GetUsdtStartBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){}  
+    rpc GetUsdtEndBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){}  
+    rpc GetCycle (google.protobuf.Empty) returns (google.protobuf.Int64Value){}  
+    rpc GetHalvingPeriod0(google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
+    rpc GetHalvingPeriod1 (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
+    rpc GetTotalReward  (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
+    rpc GetIssuedReward (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
+    rpc GetEndBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
+    rpc GetUserInfo(GetUserInfoInput) returns (UserInfo){} 
+    rpc GetPoolInfo(google.protobuf.Int32Value) returns (PoolInfo){}                                                          
+}
+
+// input 
+message InitializeInput {
+    aelf.Address lp_token_contract = 1;
+    int64 block0 = 2;
+    int64 block1 = 3;
+    int64 distribute_token_per_block0 = 4;
+    int64 distribute_token_per_block1 = 5;
+    int64 start_block = 6;
+    int64 cycle = 7;
+    int64 total_reward = 8;
+    aelf.Address admin = 9;
+}
+
+message SetHalvingPeriodInput{
+    int64 block0 = 1;
+    int64 block1 = 2;
+}
+message SetDistributeTokenPerBlockInput{
+    int64 per_block0 = 1;
+    int64 per_block1 = 2;
+}
+message AddPoolInput{
+    int64 alloc_point = 1;
+    string lp_token = 2;
+    bool with_update = 3;
+}
+message DepositInput{
+    int32 pid = 1;
+    int64 amount = 2;
+}
+message WithdrawInput{
+    int32 pid = 1;
+    int64 amount = 2;
+}
+message NewRewardInput{
+    int64 usdt_amount = 1;
+    int64 new_per_block = 2;
+    int64 start_block = 3;
+}
+message SetReDepositInput{
+    aelf.Address farm_two_pool = 1;
+    aelf.Address router = 2;
+}
+message ReDepositInput{
+    int32 pid = 1;
+    int64 amount = 2;
+    string channel = 3;
+}
+message PendingInput{
+    int32 pid = 1;
+    aelf.Address user = 2;
+}
+message GetReDepositLimitInput{
+    int32 pid = 1;
+    aelf.Address user = 2;
+}
+
+message PendingLockDistributeTokenInput{
+    int32 pid = 1;
+    aelf.Address user = 2;
+}
+message GetUserInfoInput{
+    int32 pid = 1;
+    aelf.Address user = 2;
+}
+//Output
+message GetDistributeTokenBlockRewardOutput{
+    int64 block_reward = 1;
+    int64 block_lock_reward = 2;
+}
+message PendingOutput{
+    int64 distribute_token_amount = 1;
+    int64 usdt_amount = 2;
+    int64 block_number = 3;
+}
+ 
+//Struct
+message UserInfo{
+    int64 amount = 1;
+    int64 reward_distribute_token_debt = 2;
+    int64 reward_lock_distribute_token_debt = 3;
+    int64 reward_usdt_debt = 4;
+    int64 lock_pending = 5;
+    int64 last_reward_block = 6;
+    int64 claimed_amount = 7;
+}
+
+ message PoolInfo {
+    string lp_token = 1; 
+    int64 alloc_point = 2;
+    int64 last_reward_block = 3;
+    aelf.BigIntValue  acc_distribute_token_per_share = 4;
+    aelf.BigIntValue  acc_lock_distribute_token_per_share = 5;
+    aelf.BigIntValue  acc_usdt_per_share = 6;
+    int64 total_amount = 7;
+    aelf.BigIntValue last_acc_lock_distribute_token_per_share = 8;
+  }
+  //Event
+message Deposit{
+    option (aelf.is_event) = true;
+    aelf.Address user = 1 [(aelf.is_indexed) = true];
+    int64 pid = 2 [(aelf.is_indexed) = true];
+    int64 amount = 3;
+}
+message Withdraw{
+    option (aelf.is_event) = true;
+    aelf.Address user = 1 [(aelf.is_indexed) = true];
+    int64 pid = 2 [(aelf.is_indexed) = true];
+    int64 amount = 3;
+}   
+message ClaimRevenue{
+    option (aelf.is_event) = true;
+    aelf.Address user = 1 [(aelf.is_indexed) = true];
+    int64 pid = 2 [(aelf.is_indexed) = true];
+    int64 amount = 3;
+    string token = 4;
+}   
+message WeightSet{
+    option (aelf.is_event) = true;
+    int64 pid = 1;
+    int64 new_allocation_point = 2;      
+}   
+message PoolAdded{
+    option (aelf.is_event) = true;
+    string token = 1;
+    int64 pid = 2;  
+    int64 allocation_point = 3;      
+    int64 last_reward_block_height = 4;     
+    int64 pool_type = 5;  
+}   
+message DistributeTokenPerBlockSet{
+    option (aelf.is_event) = true;
+    int64 new_distribute_token_per_block1 = 1;
+    int64 new_distribute_token_per_block2 = 2;  
+
+}        
+message HalvingPeriodSet{
+    option (aelf.is_event) = true;
+    int64 period1 = 1;
+    int64 period2 = 2;  
+}       
+message NewRewardSet{
+    option (aelf.is_event) = true;
+    int64 start_block = 1;
+    int64 end_block = 2;  
+    int64 usdt_per_block = 3;  
+}       
+message UpdatePool{
+    option (aelf.is_event) = true;
+    int64 pid = 1;
+    int64 distribute_token_amount = 2;  
+    int64 usdt_amount = 3;  
+    int64 update_block_height = 4;  
+}       
+
+ 
+ 
