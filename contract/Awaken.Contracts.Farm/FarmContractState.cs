@@ -16,6 +16,9 @@ namespace Awaken.Contracts.Farm
         internal Token.TokenContractContainer.TokenContractReferenceState LpTokenContract { get; set; }
         public SingletonState<Address> Admin { get; set; }
         public SingletonState<Address> Owner { get; set; }
+        /// <summary>
+        /// Pid -> UserAddress -> RedepositAmount
+        /// </summary>
         public MappedState<int, Address, long> RedepositAmount{ get; set; }
         public SingletonState<long> StartBlockOfDistributeToken { get; set; }
         public SingletonState<long> DistributeTokenPerBlockConcentratedMining { get; set; }
@@ -24,8 +27,14 @@ namespace Awaken.Contracts.Farm
         public SingletonState<long> UsdtStartBlock { get; set; }
         public SingletonState<long> UsdtEndBlock { get; set; }
         public SingletonState<long> Cycle { get; set; }
-        public MappedState<int, PoolInfo> PoolInfo{ get; set; }
-        public MappedState<int, Address, UserInfo> UserInfo{ get; set; }
+        /// <summary>
+        /// Pid -> PoolInfo
+        /// </summary>
+        public MappedState<int, PoolInfo> PoolInfoMap{ get; set; }
+        /// <summary>
+        /// Pid -> UserAddress -> UserInfo
+        /// </summary>
+        public MappedState<int, Address, UserInfo> UserInfoMap{ get; set; }
 
         public SingletonState<long> TotalAllocPoint
         {

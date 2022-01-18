@@ -131,9 +131,9 @@ message PendingOutput{
 //Struct
 message UserInfo{
     int64 amount = 1;
-    int64 reward_distribute_token_debt = 2;
-    int64 reward_lock_distribute_token_debt = 3;
-    int64 reward_usdt_debt = 4;
+    aelf.BigIntValue reward_distribute_token_debt = 2;
+    aelf.BigIntValue reward_lock_distribute_token_debt = 3;
+    aelf.BigIntValue reward_usdt_debt = 4;
     int64 lock_pending = 5;
     int64 last_reward_block = 6;
     int64 claimed_amount = 7;
