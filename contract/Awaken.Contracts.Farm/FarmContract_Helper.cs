@@ -393,8 +393,6 @@ namespace Awaken.Contracts.Farm
         private long GetUserLockReward(int pid, Address user, BigIntValue accLockDistributeTokenPerShare)
         {
             var userInfo = State.UserInfoMap[pid][user];
-           
-            var pool = State.PoolInfoMap[pid];
             var halvingPeriod = State.HalvingPeriod0.Value.Add(State.HalvingPeriod1.Value);
             var userAmount = userInfo.Amount;
             var m = Phase(Context.CurrentHeight);
@@ -489,6 +487,91 @@ namespace Awaken.Contracts.Farm
                 To = to
             });
         }
+
+         private long PendingDistributeToken(int pid, Address user)
+        {
+            var pool = State.PoolInfoMap[pid];
+            var userInfo = State.UserInfoMap[pid][user];
+            var accDistributeTokenPerShare = pool.AccDistributeTokenPerShare;
+            var accLockDistributeTokenPerShare = pool.AccLockDistributeTokenPerShare;
+            if (userInfo.Amount < 0) return 0;
+            if (userInfo.Amount == 0 && userInfo.LockPending == 0) {
+                return 0;
+            }
+            long stillLockReward = 0;
+            BigIntValue userReward= 0;
+            BigIntValue userLockAllReward = 0;
+            if (Context.CurrentHeight <= pool.LastRewardBlock)
+                return Convert.ToInt64(userReward.Add(userLockAllReward).Sub(stillLockReward).ToString());
+            if (pool.TotalAmount == 0) {
+                userLockAllReward = userInfo.LockPending;
+                stillLockReward = GetUserLockReward(pid, user, 0);
+            }
+            else {
+                GetDistributeTokenBlockRewardInternal(pool.LastRewardBlock,  out var blockReward,out var blockLockReward);
+                blockReward = blockReward.Mul(pool.AllocPoint).Div(
+                    State.TotalAllocPoint.Value
+                );
+                blockLockReward = blockLockReward.Mul(pool.AllocPoint).Div(
+                    State.TotalAllocPoint.Value
+                );
+                accDistributeTokenPerShare = accDistributeTokenPerShare.Add(new BigIntValue(blockReward)
+                    .Mul(Multiplier).Div(pool.TotalAmount)
+                );
+                accLockDistributeTokenPerShare = accLockDistributeTokenPerShare.Add(
+                    new BigIntValue(blockLockReward).Mul(Multiplier).Div(pool.TotalAmount)
+                );
+                userReward = accDistributeTokenPerShare.Mul(userInfo.Amount).Div(Multiplier).Sub(
+                    userInfo.RewardDistributeTokenDebt
+                );
+
+                userLockAllReward = accLockDistributeTokenPerShare.Mul(userInfo
+                        .Amount).
+                     
+                    Div(Multiplier)
+                    .Sub(userInfo.RewardLockDistributeTokenDebt)
+                    .Add(userInfo.LockPending);
+                stillLockReward = GetUserLockReward(
+                    pid,
+                    user,
+                    accLockDistributeTokenPerShare
+                ); }
+            return Convert.ToInt64(userReward.Add(userLockAllReward).Sub(stillLockReward).ToString());
+        }
+
+         private long PendingUsdt(int pid, Address user)
+         {
+             var pool = State.PoolInfoMap[pid];
+             var userInfo = State.UserInfoMap[pid][user];
+
+             var lpSupply = pool.TotalAmount;
+
+             if (Context.CurrentHeight <= State.UsdtStartBlock.Value || lpSupply == 0) return 0;
+             long subtractor;
+             long multiplier = 0;
+             if (Context.CurrentHeight <=  State.UsdtEndBlock.Value) {
+                 subtractor = Math.Max(pool.LastRewardBlock, State.UsdtStartBlock.Value); 
+                 multiplier = Context.CurrentHeight.Sub(subtractor);
+             } else {
+                 if (pool.LastRewardBlock < State.UsdtEndBlock.Value) {
+                     subtractor = Math.Max(pool.LastRewardBlock, State.UsdtStartBlock.Value); 
+                     multiplier = State.UsdtEndBlock.Value.Sub(subtractor);
+                 }
+             }
+                 
+             var usdtReward = multiplier
+                 .Mul(State.UsdtPerBlock.Value)
+                 .Mul(pool.AllocPoint)
+                 .Div(State.TotalAllocPoint.Value);
+             var accUsdtPerShare = pool.AccUsdtPerShare.Add(new BigIntValue(usdtReward)
+                 .Mul(Multiplier).Div(lpSupply)
+             );
+
+             return
+                 Convert.ToInt64(accUsdtPerShare.Mul(userInfo.Amount).Div(Multiplier).Sub(
+                         userInfo.RewardUsdtDebt).ToString() 
+                 );
+         }
     }
     
     
