@@ -116,7 +116,12 @@ namespace Awaken.Contracts.Farm
 
         public override Int64Value GetReDepositLimit(GetReDepositLimitInput input)
         {
-            return base.GetReDepositLimit(input);
+            var limit = GetReDepositLimitInternal(input.Pid, input.User);
+
+            return new Int64Value()
+            {
+                Value = limit
+            };
         }
 
         public override Int64Value GetEndBlock(Empty input)

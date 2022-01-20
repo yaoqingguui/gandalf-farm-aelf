@@ -31,5 +31,29 @@ namespace Awaken.Contracts.Farm
             WithdrawInternal(input.Pid, input.Amount, Context.Sender);
             return new Empty();
         }
+
+        public override Empty ReDeposit(ReDepositInput input)
+        {
+            var reDepositLimit = GetReDepositLimitInternal(input.Pid, Context.Sender);
+            Assert(input.Amount <= reDepositLimit.Sub(State.RedepositAmount[input.Pid][Context.Sender]), "Insufficient reDepositLimit");
+            DistributeTokenTransferIn(
+                Context.Sender,
+                Context.Self,
+                input.Amount
+            );
+            State.TokenContract.Approve.Send(new ApproveInput()
+            {
+                Amount =  input.Amount,
+                Spender = State.Router.Value,
+                Symbol = DistributeToken
+            });
+            //to do: addLiquidity and send tx to farmPool two
+            return new Empty();
+        }
+
+        public override Empty FixEndBlock(BoolValue input)
+        {
+            return base.FixEndBlock(input);
+        }
     }
 }
