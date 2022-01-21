@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.3.0" />
     <PackageReference Include="coverlet.collector" Version="3.1.0" />
     <PackageReference Include="Shouldly" Version="3.0.2" />
+    <PackageReference Include="Volo.Abp.Http" Version="3.1.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.console" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
@@ -31,7 +32,26 @@
       <Link>Protobuf\Proto\authority_info.proto</Link>
     </ContractMessage>
   </ItemGroup>
+  
   <ItemGroup>
+    <ContractStub Include="..\..\protobuf\acs0.proto">
+      <Link>Protobuf\Proto\acs0.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\acs1.proto">
+      <Link>Protobuf\Proto\acs1.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\acs2.proto">
+      <Link>Protobuf\Proto\acs2.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\transaction_fee.proto">
+      <Link>Protobuf\Proto\transaction_fee.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\token_contract.proto">
+      <Link>Protobuf\Proto\token_contract.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\awaken_token_contract.proto">
+      <Link>Protobuf\Proto\awaken_token_contract.proto</Link>
+    </ContractStub>
     <ContractStub Include="..\..\protobuf\farm_contract.proto">
       <Link>Protobuf\Proto\farm_contract.proto</Link>
     </ContractStub>
@@ -39,6 +59,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\contract\Awaken.Contracts.Farm\Awaken.Contracts.Farm.csproj" />
+    <ProjectReference Include="..\..\contract\Awaken.Contracts.Token\Awaken.Contracts.Token.csproj" />
     <ProjectReference Include="..\..\src\AElf.Boilerplate.TestBase\AElf.Boilerplate.TestBase.csproj" />
   </ItemGroup>
 
