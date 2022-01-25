@@ -50,10 +50,6 @@ namespace Awaken.Contracts.Farm
             //to do: addLiquidity and send tx to farmPool two
             return new Empty();
         }
-
-        public override Empty FixEndBlock(BoolValue input)
-        {
-            return base.FixEndBlock(input);
-        }
+        
     }
 }

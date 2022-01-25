@@ -47,18 +47,19 @@ namespace Awaken.Contracts.Farm
                     .Mul(halvingPeriod)
                     .Add(State.StartBlockOfDistributeToken.Value)
                     .Add(State.HalvingPeriod0.Value);
+                var halfLevel = 2 << Convert.ToInt32(n.Sub(1)).Div(2);
                 if (switchBlock > lastRewardBlock)
                 {
             
                     blockLockReward = blockLockReward.Add(
                         switchBlock.Sub(lastRewardBlock).Mul(
-                            State.DistributeTokenPerBlockConcentratedMining.Value.Div(2 << Convert.ToInt32(n.Sub(1)))
+                            State.DistributeTokenPerBlockConcentratedMining.Value.Div(halfLevel)
                         )
                     );
             
                     blockReward = blockReward.Add(
                         r.Sub(switchBlock).Mul(
-                            State.DistributeTokenPerBlockContinuousMining.Value.Div(2 << Convert.ToInt32(n.Sub(1)))
+                            State.DistributeTokenPerBlockContinuousMining.Value.Div(halfLevel)
                         )
                     );
                 }
@@ -66,14 +67,14 @@ namespace Awaken.Contracts.Farm
                 {
                     blockReward = blockReward.Add(
                         r.Sub(lastRewardBlock).Mul(
-                            State.DistributeTokenPerBlockContinuousMining.Value.Div(2 << Convert.ToInt32(n.Sub(1)))
+                            State.DistributeTokenPerBlockContinuousMining.Value.Div(halfLevel)
                         )
                     );
                 }
             
                 lastRewardBlock = r;
             }
-            
+            var halfLevelNew = 2 << Convert.ToInt32(m).Div(2);
             var switchBlockNext = m.Mul(halvingPeriod).Add(State.StartBlockOfDistributeToken.Value).Add(
                 State.HalvingPeriod0.Value
             );
@@ -82,7 +83,7 @@ namespace Awaken.Contracts.Farm
             {
                 blockLockReward = blockLockReward.Add(
                     (rewardBlock.Sub(lastRewardBlock)).Mul(
-                        State.DistributeTokenPerBlockConcentratedMining.Value.Div(2 << Convert.ToInt32(m))
+                        State.DistributeTokenPerBlockConcentratedMining.Value.Div(halfLevelNew)
                     )
                 );
             }
@@ -92,12 +93,12 @@ namespace Awaken.Contracts.Farm
                 {
                     blockLockReward = blockLockReward.Add(
                         (switchBlockNext.Sub(lastRewardBlock)).Mul(
-                            State.DistributeTokenPerBlockConcentratedMining.Value.Div(2 << Convert.ToInt32(m))
+                            State.DistributeTokenPerBlockConcentratedMining.Value.Div(halfLevelNew)
                         )
                     );
                     blockReward = blockReward.Add(
                         rewardBlock.Sub(switchBlockNext).Mul(
-                            State.DistributeTokenPerBlockContinuousMining.Value.Div(2 << Convert.ToInt32(m))
+                            State.DistributeTokenPerBlockContinuousMining.Value.Div(halfLevelNew)
                         )
                     );
                 }
@@ -105,7 +106,7 @@ namespace Awaken.Contracts.Farm
                 {
                     blockReward = blockReward.Add(
                         rewardBlock.Sub(lastRewardBlock).Mul(
-                            State.DistributeTokenPerBlockContinuousMining.Value.Div(2 << Convert.ToInt32(m))
+                            State.DistributeTokenPerBlockContinuousMining.Value.Div(halfLevelNew)
                         )
                     );
                 }
@@ -135,7 +136,7 @@ namespace Awaken.Contracts.Farm
                     if (switchBlock > lastRewardBlock) {
                         blockLockReward = blockLockReward.Add(
                             switchBlock.Sub(lastRewardBlock).Mul(
-                                State.DistributeTokenPerBlockContinuousMining.Value.Div(2 << Convert.ToInt32(n.Sub(1)))
+                                State.DistributeTokenPerBlockContinuousMining.Value.Div((2 << Convert.ToInt32(n.Sub(1))).Div(2))
                             )
                         );
                     }
@@ -243,13 +244,19 @@ namespace Awaken.Contracts.Farm
                Pid = pid,
                DistributeTokenAmount = totalReward,
                UpdateBlockHeight = Context.CurrentHeight,
-               UsdtAmount = Convert.ToInt64(usdtReward.ToString())
+               UsdtAmount = Convert.ToInt64(usdtReward.Value)
            });
         }
 
         private void DepositInternal(int pid, long amount, Address user)
         {
             var pool = State.PoolInfoMap[pid];
+            State.UserInfoMap[pid][user] = State.UserInfoMap[pid][user] ?? new UserInfo()
+            {
+                RewardUsdtDebt = 0,
+                RewardDistributeTokenDebt = 0,
+                RewardLockDistributeTokenDebt = 0
+            } ;
             var userInfo = State.UserInfoMap[pid][user];
             UpdatePoolInternal(pid);
             long stillLockReward = 0;
@@ -270,7 +277,7 @@ namespace Awaken.Contracts.Farm
                 );
                 var pendingAmount = Convert.ToInt64(userReward.Add(userLockReward).Sub(
                     stillLockReward
-                ).ToString());
+                ).Value);
                 if (pendingAmount > 0)
                 {
                     DistributeTokenTransfer(user, pendingAmount);
@@ -286,17 +293,19 @@ namespace Awaken.Contracts.Farm
 
                 var usdtReward = Convert.ToInt64(pool.AccUsdtPerShare.Mul(userInfo.Amount)
                     .Div(Multiplier)
-                    .Sub(userInfo.RewardUsdtDebt).ToString());
+                    .Sub(userInfo.RewardUsdtDebt).Value);
 
-                if (usdtReward <= 0) return;
-                UsdtTransfer(user, usdtReward);
-                Context.Fire(new ClaimRevenue
+                if (usdtReward > 0)
                 {
-                    User = user,
-                    Amount = usdtReward,
-                    Pid = pid,
-                    Token = Usdt
-                });
+                    UsdtTransfer(user, usdtReward);
+                    Context.Fire(new ClaimRevenue
+                    {
+                        User = user,
+                        Amount = usdtReward,
+                        Pid = pid,
+                        Token = Usdt
+                    });
+                }
             }
 
             if (amount > 0) {
@@ -322,6 +331,12 @@ namespace Awaken.Contracts.Farm
         private void WithdrawInternal(int pid, long amount, Address user)
         {
             var pool = State.PoolInfoMap[pid];
+            State.UserInfoMap[pid][user] = State.UserInfoMap[pid][user] ?? new UserInfo()
+            {
+                RewardUsdtDebt = 0,
+                RewardDistributeTokenDebt = 0,
+                RewardLockDistributeTokenDebt = 0
+            } ;
             var userInfo = State.UserInfoMap[pid][user];
             Assert(userInfo.Amount >= amount, "withdraw: Insufficient amount");
             UpdatePoolInternal(pid);
@@ -343,7 +358,7 @@ namespace Awaken.Contracts.Farm
                 );
                 var pendingAmount = Convert.ToInt64(userReward.Add(userLockReward).Sub(
                     stillLockReward
-                ).ToString());
+                ).Value);
                 if (pendingAmount > 0)
                 {
                     DistributeTokenTransfer(user, pendingAmount);
@@ -359,17 +374,19 @@ namespace Awaken.Contracts.Farm
 
                 var usdtReward = Convert.ToInt64(pool.AccUsdtPerShare.Mul(userInfo.Amount)
                     .Div(Multiplier)
-                    .Sub(userInfo.RewardUsdtDebt).ToString());
+                    .Sub(userInfo.RewardUsdtDebt).Value);
 
-                if (usdtReward <= 0) return;
-                UsdtTransfer(user, usdtReward);
-                Context.Fire(new ClaimRevenue
+                if (usdtReward > 0)
                 {
-                    User = user,
-                    Amount = usdtReward,
-                    Pid = pid,
-                    Token = Usdt
-                });
+                    UsdtTransfer(user, usdtReward);
+                    Context.Fire(new ClaimRevenue
+                    {
+                        User = user,
+                        Amount = usdtReward,
+                        Pid = pid,
+                        Token = Usdt
+                    });
+                }
             }
             if (amount > 0) {
                 LpTokenTransferOut(user, pool.LpToken, amount);
@@ -392,7 +409,12 @@ namespace Awaken.Contracts.Farm
         }
         private long GetUserLockReward(int pid, Address user, BigIntValue accLockDistributeTokenPerShare)
         {
-            var userInfo = State.UserInfoMap[pid][user];
+            var userInfo = State.UserInfoMap[pid][user] ?? new UserInfo()
+            {
+                RewardUsdtDebt = 0,
+                RewardDistributeTokenDebt = 0,
+                RewardLockDistributeTokenDebt = 0
+            } ;
             var halvingPeriod = State.HalvingPeriod0.Value.Add(State.HalvingPeriod1.Value);
             var userAmount = userInfo.Amount;
             var m = Phase(Context.CurrentHeight);
@@ -435,7 +457,7 @@ namespace Awaken.Contracts.Farm
                     .Div(State.HalvingPeriod1.Value.Add(switchBlock).Sub(userInfo.LastRewardBlock));
                 realLockDistributeTokenReward = totalLockPendingAmount.Sub(unLockDistributeTokenReward);
             }
-            return Convert.ToInt64(realLockDistributeTokenReward.ToString());
+            return Convert.ToInt64(realLockDistributeTokenReward.Value);
         }
 
         private void DistributeTokenTransfer(Address to, long amount)
@@ -501,7 +523,12 @@ namespace Awaken.Contracts.Farm
          private long PendingDistributeToken(int pid, Address user)
         {
             var pool = State.PoolInfoMap[pid];
-            var userInfo = State.UserInfoMap[pid][user];
+            var userInfo = State.UserInfoMap[pid][user] ?? new UserInfo()
+            {
+                RewardUsdtDebt = 0,
+                RewardDistributeTokenDebt = 0,
+                RewardLockDistributeTokenDebt = 0
+            } ;
             var accDistributeTokenPerShare = pool.AccDistributeTokenPerShare;
             var accLockDistributeTokenPerShare = pool.AccLockDistributeTokenPerShare;
             if (userInfo.Amount < 0) return 0;
@@ -512,7 +539,7 @@ namespace Awaken.Contracts.Farm
             BigIntValue userReward= 0;
             BigIntValue userLockAllReward = 0;
             if (Context.CurrentHeight <= pool.LastRewardBlock)
-                return Convert.ToInt64(userReward.Add(userLockAllReward).Sub(stillLockReward).ToString());
+                return Convert.ToInt64(userReward.Add(userLockAllReward).Sub(stillLockReward).Value);
             if (pool.TotalAmount == 0) {
                 userLockAllReward = userInfo.LockPending;
                 stillLockReward = GetUserLockReward(pid, user, 0);
@@ -546,13 +573,18 @@ namespace Awaken.Contracts.Farm
                     user,
                     accLockDistributeTokenPerShare
                 ); }
-            return Convert.ToInt64(userReward.Add(userLockAllReward).Sub(stillLockReward).ToString());
+            return Convert.ToInt64(userReward.Add(userLockAllReward).Sub(stillLockReward).Value);
         }
 
          private long PendingUsdt(int pid, Address user)
          {
              var pool = State.PoolInfoMap[pid];
-             var userInfo = State.UserInfoMap[pid][user];
+             var userInfo = State.UserInfoMap[pid][user] ?? new UserInfo()
+             {
+                 RewardUsdtDebt = 0,
+                 RewardDistributeTokenDebt = 0,
+                 RewardLockDistributeTokenDebt = 0
+             } ;
 
              var lpSupply = pool.TotalAmount;
 
@@ -579,13 +611,18 @@ namespace Awaken.Contracts.Farm
 
              return
                  Convert.ToInt64(accUsdtPerShare.Mul(userInfo.Amount).Div(Multiplier).Sub(
-                         userInfo.RewardUsdtDebt).ToString() 
+                         userInfo.RewardUsdtDebt).Value 
                  );
          }
 
          private long GetReDepositLimitInternal(int pid, Address user)
          {
-             var userInfo = State.UserInfoMap[pid][user];
+             var userInfo = State.UserInfoMap[pid][user] ?? new UserInfo()
+             {
+                 RewardUsdtDebt = 0,
+                 RewardDistributeTokenDebt = 0,
+                 RewardLockDistributeTokenDebt = 0
+             } ;
              PendingDistributeTokenWithLocked(pid, user, out var userPendingReward, out var stillLockReward);
              var limit = userInfo.ClaimedAmount.Add(stillLockReward).Add(
                  userPendingReward
@@ -596,8 +633,12 @@ namespace Awaken.Contracts.Farm
          private void PendingDistributeTokenWithLocked(int pid, Address user, out long userPendingReward, out long stillLockReward)
          {
              var pool = State.PoolInfoMap[pid];
-             var userInfo = State.UserInfoMap[pid][user];
-             var userAmount = userInfo.Amount;
+             var userInfo = State.UserInfoMap[pid][user] ?? new UserInfo()
+             {
+                 RewardUsdtDebt = 0,
+                 RewardDistributeTokenDebt = 0,
+                 RewardLockDistributeTokenDebt = 0
+             } ;
              var accDistributeTokenPerShare = pool.AccDistributeTokenPerShare;
              var accLockDistributeTokenPerShare = pool.AccLockDistributeTokenPerShare;
              userPendingReward = 0;
@@ -652,7 +693,74 @@ namespace Awaken.Contracts.Farm
                 ); 
             }
 
-            userPendingReward = Convert.ToInt64(userReward.Add(userLockAllReward).Sub(stillLockReward).ToString());
+            userPendingReward = Convert.ToInt64(userReward.Add(userLockAllReward).Sub(stillLockReward).Value);
+         }
+
+         private long GetEndBlock(long restReward)
+         {
+             var blockHeightBegin = Math.Max(Context.CurrentHeight, State.StartBlockOfDistributeToken.Value);
+        
+             var blockHeightEnd = State.EndBlock.Value;
+             while(restReward != 0){
+                 _GetEndBlock(blockHeightBegin,restReward, out blockHeightEnd, out restReward);
+                 blockHeightBegin = blockHeightEnd;
+             }
+             return blockHeightEnd;
+         }
+
+         private void _GetEndBlock(long blockHeightBegin, long rewardPending, out long blockHeightEnd,
+             out long rewardRest)
+         {
+             var halvingPeriod = State.HalvingPeriod0.Value.Add(State.HalvingPeriod1.Value);
+             
+             var _phase = blockHeightBegin.Sub(State.StartBlockOfDistributeToken.Value) % halvingPeriod == 0 && blockHeightBegin > State.StartBlockOfDistributeToken.Value ? Phase(blockHeightBegin) + 1 : Phase(blockHeightBegin);
+             var halfLevel = (2 << Convert.ToInt32(_phase)).Div(2);
+             if (_phase < 200 &&
+                 (State.DistributeTokenPerBlockConcentratedMining.Value.Div(halfLevel) == 0 ||
+                  State.DistributeTokenPerBlockContinuousMining.Value.Div(halfLevel) == 0))
+             {
+                 blockHeightEnd = blockHeightBegin;
+                 rewardRest = 0;
+                 return;
+             }
+             Assert(State.DistributeTokenPerBlockConcentratedMining.Value.Div(halfLevel) > 0 &&  State.DistributeTokenPerBlockContinuousMining.Value.Div(halfLevel) > 0,"error");
+             var switchBlock = _phase.Mul(halvingPeriod).Add(State.StartBlockOfDistributeToken.Value).Add(State.HalvingPeriod0.Value);
+             long _reward;
+             if(switchBlock > blockHeightBegin){
+                 _reward = switchBlock.Sub(blockHeightBegin).Mul(State.DistributeTokenPerBlockConcentratedMining.Value.Div(halfLevel));
+                 if (rewardPending >= _reward)
+                 {
+                     blockHeightEnd = switchBlock;
+                     rewardRest = rewardPending.Sub(_reward);
+                     return;
+                 }
+                 blockHeightEnd = blockHeightBegin.Add(rewardPending.Div(
+                     State.DistributeTokenPerBlockConcentratedMining.Value.Div(halfLevel)));
+                 rewardRest = 0;
+                 return;
+                 
+             }
+             var endRewardBlock = (_phase + 1).Mul(halvingPeriod).Add(State.StartBlockOfDistributeToken.Value);
+             _reward = endRewardBlock.Sub(blockHeightBegin).Mul(State.DistributeTokenPerBlockContinuousMining.Value.Div(halfLevel));
+             if (rewardPending >= _reward)
+             {
+                 blockHeightEnd = endRewardBlock;
+                 rewardRest = rewardPending.Sub(_reward);
+                 return;
+             }
+             blockHeightEnd = blockHeightBegin.Add(rewardPending.Div(State.DistributeTokenPerBlockContinuousMining.Value.Div(halfLevel)));
+             rewardRest = rewardPending.Sub(_reward);
+             
+         }
+
+         private void FixEndBlockInternal(bool isUpdate)
+         {
+             if (isUpdate) {
+                 MassUpdatePoolsInternal();
+             }
+             var restReward = State.TotalReward.Value.Sub(State.IssuedReward.Value);
+             var blockHeightEnd = GetEndBlock(restReward);
+             State.EndBlock.Value = blockHeightEnd;
          }
     }
     

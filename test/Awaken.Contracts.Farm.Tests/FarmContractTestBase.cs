@@ -29,7 +29,8 @@ namespace Awaken.Contracts.Farm
 
         internal FarmContractContainer.FarmContractStub GetFarmContractStub(ECKeyPair senderKeyPair)
         {
-            return GetTester<FarmContractContainer.FarmContractStub>(DAppContractAddress, senderKeyPair);
+            return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
+                .Create<Awaken.Contracts.Farm.FarmContractContainer.FarmContractStub>(FarmContractAddress, senderKeyPair);
         }
         internal Awaken.Contracts.Token.TokenContractContainer.TokenContractStub GetLpContractStub(
             ECKeyPair senderKeyPair)

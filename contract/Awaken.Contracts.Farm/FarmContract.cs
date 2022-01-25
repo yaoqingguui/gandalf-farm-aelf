@@ -30,6 +30,7 @@ namespace Awaken.Contracts.Farm
             State.StartBlockOfDistributeToken.Value = input.StartBlock;
             State.Cycle.Value = input.Cycle;
             State.TotalReward.Value = input.TotalReward;
+            FixEndBlockInternal(false);
             return new Empty();
         }
         

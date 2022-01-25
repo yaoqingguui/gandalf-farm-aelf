@@ -71,7 +71,7 @@ namespace Awaken.Contracts.Farm
         public override Empty AddPool(AddPoolInput input)
         {
             AssertSenderIsAdmin();
-            Assert(input.LpToken == null,"Invalid input");
+            Assert(input.LpToken != "","Invalid input");
             if (input.WithUpdate) {
                 MassUpdatePools(new Empty());
             }
@@ -80,7 +80,7 @@ namespace Awaken.Contracts.Farm
                 ? Context.CurrentHeight
                 : State.StartBlockOfDistributeToken.Value;
             State.TotalAllocPoint.Value = State.TotalAllocPoint.Value.Add(input.AllocPoint);
-            var index = State.PoolLength.Value.Add(1);
+            var index = State.PoolLength.Value;
             State.PoolInfoMap[index] = new PoolInfo()
             {
                 LpToken = input.LpToken,
@@ -121,6 +121,13 @@ namespace Awaken.Contracts.Farm
                 EndBlock = State.UsdtEndBlock.Value,
                 UsdtPerBlock = input.NewPerBlock
             });
+            return new Empty();
+        }
+
+        public override Empty FixEndBlock(BoolValue input)
+        {
+            AssertSenderIsOwner();
+            FixEndBlockInternal(input.Value);
             return new Empty();
         }
     }
