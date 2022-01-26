@@ -33,9 +33,7 @@ namespace Awaken.Contracts.Farm
             blockReward = 0;
             blockLockReward = 0;
             var halvingPeriod = State.HalvingPeriod0.Value.Add(State.HalvingPeriod1.Value);
-            var rewardBlock = Context.CurrentHeight > State.EndBlock.Value
-                ? State.EndBlock.Value
-                : Context.CurrentHeight;
+            var rewardBlock = Math.Min(Context.CurrentHeight,State.EndBlock.Value); 
             if (rewardBlock <= lastRewardBlock) return;
             var n = Phase(lastRewardBlock);
             var m = Phase(rewardBlock);
@@ -47,7 +45,7 @@ namespace Awaken.Contracts.Farm
                     .Mul(halvingPeriod)
                     .Add(State.StartBlockOfDistributeToken.Value)
                     .Add(State.HalvingPeriod0.Value);
-                var halfLevel = 2 << Convert.ToInt32(n.Sub(1)).Div(2);
+                var halfLevel = (2 << Convert.ToInt32(n.Sub(1))).Div(2);
                 if (switchBlock > lastRewardBlock)
                 {
             
@@ -74,7 +72,7 @@ namespace Awaken.Contracts.Farm
             
                 lastRewardBlock = r;
             }
-            var halfLevelNew = 2 << Convert.ToInt32(m).Div(2);
+            var halfLevelNew = (2 << Convert.ToInt32(m)).Div(2);
             var switchBlockNext = m.Mul(halvingPeriod).Add(State.StartBlockOfDistributeToken.Value).Add(
                 State.HalvingPeriod0.Value
             );
@@ -82,7 +80,7 @@ namespace Awaken.Contracts.Farm
             if (switchBlockNext >= rewardBlock)
             {
                 blockLockReward = blockLockReward.Add(
-                    (rewardBlock.Sub(lastRewardBlock)).Mul(
+                    rewardBlock.Sub(lastRewardBlock).Mul(
                         State.DistributeTokenPerBlockConcentratedMining.Value.Div(halfLevelNew)
                     )
                 );
@@ -117,7 +115,7 @@ namespace Awaken.Contracts.Farm
         {
             var pool = State.PoolInfoMap[pid];
             var lastRewardBlock = pool.LastRewardBlock;
-            var rewardBlock = Context.CurrentHeight > State.EndBlock.Value ? State.EndBlock.Value : Context.CurrentHeight;
+            var rewardBlock = Math.Min(Context.CurrentHeight, State.EndBlock.Value);
             var m = Phase(rewardBlock);
             var n = Phase(lastRewardBlock);
             var lastAccLockDistributeTokenPerShare = pool.LastAccLockDistributeTokenPerShare;
@@ -136,7 +134,7 @@ namespace Awaken.Contracts.Farm
                     if (switchBlock > lastRewardBlock) {
                         blockLockReward = blockLockReward.Add(
                             switchBlock.Sub(lastRewardBlock).Mul(
-                                State.DistributeTokenPerBlockContinuousMining.Value.Div((2 << Convert.ToInt32(n.Sub(1))).Div(2))
+                                State.DistributeTokenPerBlockConcentratedMining.Value.Div((2 << Convert.ToInt32(n.Sub(1))).Div(2))
                             )
                         );
                     }
@@ -202,7 +200,7 @@ namespace Awaken.Contracts.Farm
            State.IssuedReward.Value = State.IssuedReward.Value.Add(totalReward);
            var lastAccLockDistributeTokenPerShare = GetLastAccLockDistributeTokenPerShare(pid);
           
-           if (lastAccLockDistributeTokenPerShare.Equals(pool.LastAccLockDistributeTokenPerShare) ) {
+           if (! lastAccLockDistributeTokenPerShare.Equals(pool.LastAccLockDistributeTokenPerShare) ) {
                State.PoolInfoMap[pid].LastAccLockDistributeTokenPerShare = lastAccLockDistributeTokenPerShare;
            }
 
@@ -273,7 +271,7 @@ namespace Awaken.Contracts.Farm
                 stillLockReward = GetUserLockReward(
                     pid,
                     user,
-                    pool.AccDistributeTokenPerShare
+                    pool.AccLockDistributeTokenPerShare
                 );
                 var pendingAmount = Convert.ToInt64(userReward.Add(userLockReward).Sub(
                     stillLockReward
@@ -331,6 +329,7 @@ namespace Awaken.Contracts.Farm
         private void WithdrawInternal(int pid, long amount, Address user)
         {
             var pool = State.PoolInfoMap[pid];
+
             State.UserInfoMap[pid][user] = State.UserInfoMap[pid][user] ?? new UserInfo()
             {
                 RewardUsdtDebt = 0,
@@ -354,7 +353,7 @@ namespace Awaken.Contracts.Farm
                 stillLockReward = GetUserLockReward(
                     pid,
                     user,
-                    pool.AccDistributeTokenPerShare
+                    pool.AccLockDistributeTokenPerShare
                 );
                 var pendingAmount = Convert.ToInt64(userReward.Add(userLockReward).Sub(
                     stillLockReward

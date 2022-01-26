@@ -188,8 +188,176 @@ namespace Awaken.Contracts.Farm
                 UsdtAmount = amount,
                 NewPerBlock = newPerBlock
             });
+            var cycle = await AdminStub.GetCycle.CallAsync(new Empty());
+            cycle.Value.ShouldBe(50);
+        }
+        [Fact]
+        public async Task RewardTest()
+        {
+            await Initialize();
+            var allocPoint = 10;
+            var symbol = GetTokenPairSymbol("ELF", "TEST");
+            await AdminStub.AddPool.SendAsync(new AddPoolInput()
+            {
+                AllocPoint = allocPoint,
+                LpToken = symbol,
+                WithUpdate = false
+            });
+            var amount = 10000000000;
+            await UserTomStub.Deposit.SendAsync(new DepositInput()
+            {
+                Pid = 0,
+                Amount = amount
+            });
+            var startBlock = await AdminStub.GetStartBlockOfDistributeToken.CallAsync(new Empty());
+            var distributeTokenPerBlockConcentratedMining = await AdminStub.GetDistributeTokenPerBlockConcentratedMining.CallAsync(new Empty());
+            var distributeTokenPerBlockContinuousMining = await AdminStub.GetDistributeTokenPerBlockContinuousMining.CallAsync(new Empty());
+            var phase0reward = distributeTokenPerBlockConcentratedMining.Value.Mul(50);
+            var phase1reward = distributeTokenPerBlockContinuousMining.Value.Mul(100);
+            var expectBalance = phase0reward.Add(phase1reward);
+            await SkipToBlockHeight(startBlock.Value.Add(150));
+            await UserTomStub.Withdraw.SendAsync(new WithdrawInput()
+            {
+                Pid = 0,
+                Amount = amount.Div(2)
+            });
+            var balance = await UserTomTokenContractStub.GetBalance.CallAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = UserTomAddress,
+                Symbol = "AWAKEN"
+            });
+              balance.Balance.ShouldBe(expectBalance);
+              
+              //usdt reward
+            
+              var newPerBlock = 100000000;
+              var height = await GetCurrentBlockHeight();
+              await AdminStub.SetTool.SendAsync(AdminAddress);
+              await AdminStub.NewReward.SendAsync(new NewRewardInput()
+              {
+                  StartBlock = height.Add(10),
+                  UsdtAmount = amount,
+                  NewPerBlock = newPerBlock
+              });
+              await SkipToBlockHeight(height.Add(20));
+              var pending = await UserTomStub.Pending.CallAsync(new PendingInput()
+              {
+                  Pid = 0,
+                  User = UserTomAddress
+              });
+              var pendingLockDistributeToken = await UserTomStub.PendingLockDistributeToken.CallAsync(new PendingLockDistributeTokenInput()
+              {
+                  Pid = 0,
+                  User = UserTomAddress
+              });
+              await UserTomStub.GetReDepositLimit.CallAsync(new GetReDepositLimitInput()
+              {
+                  Pid = 0,
+                  User = UserTomAddress
+              });
+              await UserTomStub.Withdraw.SendAsync(new WithdrawInput()
+              {
+                  Pid = 0,
+                  Amount = amount.Div(2)
+              });
+              await UserTomStub.GetReDepositLimit.CallAsync(new GetReDepositLimitInput()
+              {
+                  Pid = 0,
+                  User = UserTomAddress
+              });
         }
 
+        [Fact]
+        public async Task SetTest()
+        {
+            await Initialize();
+            var allocPoint = 10;
+            var symbol = GetTokenPairSymbol("ELF", "TEST");
+            await AdminStub.AddPool.SendAsync(new AddPoolInput()
+            {
+                AllocPoint = allocPoint,
+                LpToken = symbol,
+                WithUpdate = false
+            });
+            //SetTool
+            await AdminStub.SetTool.SendAsync(UserTomAddress);
+            //SetHalvingPeriod
+            var block0 = 10;
+            var block1 = 20;
+            await AdminStub.SetHalvingPeriod.SendAsync(new SetHalvingPeriodInput()
+            {
+                Block0 = block0,
+                Block1 = block1
+            });
+            var halvingPeriod0 =await AdminStub.GetHalvingPeriod0.CallAsync(new Empty());
+            var halvingPeriod1 =await AdminStub.GetHalvingPeriod1.CallAsync(new Empty());
+            halvingPeriod0.Value.ShouldBe(block0);
+            halvingPeriod1.Value.ShouldBe(block1);
+            //SetDistributeTokenPerBlock
+            var perBlock0 = 1000000000;
+            var perBlock1 = 2000000000;
+            await AdminStub.SetDistributeTokenPerBlock.SendAsync(new SetDistributeTokenPerBlockInput()
+            {
+                PerBlock0 = perBlock0,
+                PerBlock1 = perBlock1
+
+            });
+            var perBlock0Real =await AdminStub.GetDistributeTokenPerBlockConcentratedMining.CallAsync(new Empty());
+            var perBlock1Real =await AdminStub.GetDistributeTokenPerBlockContinuousMining.CallAsync(new Empty());
+            perBlock0Real.Value.ShouldBe(perBlock0);
+            perBlock1Real.Value.ShouldBe(perBlock1);
+            //SetOwner
+            await AdminStub.SetOwner.SendAsync(UserTomAddress);
+            var owner = await AdminStub.GetOwner.CallAsync(new Empty());
+            owner.ShouldBe(UserTomAddress);
+            //SetAdmin
+            await AdminStub.SetAdmin.SendAsync(UserTomAddress);
+            var admin = await AdminStub.GetAdmin.CallAsync(new Empty());
+            admin.ShouldBe(UserTomAddress);
+            //SetReDeposit
+            await UserTomStub.SetReDeposit.SendAsync(new SetReDepositInput()
+            {
+            });
+        }
+
+        [Fact]
+        public async Task GetTest()
+        {
+            await Initialize();
+            var allocPoint = 10;
+            var symbol = GetTokenPairSymbol("ELF", "TEST");
+            await AdminStub.AddPool.SendAsync(new AddPoolInput()
+            {
+                AllocPoint = allocPoint,
+                LpToken = symbol,
+                WithUpdate = false
+            });
+
+            var amount = 10000000000;
+            var newPerBlock = 100000000;
+            var height = await GetCurrentBlockHeight();
+            var startBlock = height.Add(10);
+            await AdminStub.SetTool.SendAsync(AdminAddress);
+            await AdminStub.NewReward.SendAsync(new NewRewardInput()
+            {
+                StartBlock = startBlock,
+                UsdtAmount = amount,
+                NewPerBlock = newPerBlock
+            });
+       
+            await SkipToBlockHeight(startBlock.Add(150));
+            var totalReward = await AdminStub.GetTotalReward.CallAsync(new Empty());
+            totalReward.Value.ShouldBe(15834375000000);
+            var usdtEndBlock =await AdminStub.GetUsdtEndBlock.CallAsync(new Empty());
+            usdtEndBlock.Value.ShouldBe(startBlock.Add(50));
+            var usdtPerBlock = await AdminStub.GetUsdtPerBlock.CallAsync(new Empty());
+            usdtPerBlock.Value.ShouldBe(newPerBlock);
+            var usdtStartBlock = await AdminStub.GetUsdtStartBlock.CallAsync(new Empty());
+            usdtStartBlock.Value.ShouldBe(startBlock);
+
+            var issuedReward = await AdminStub.GetIssuedReward.CallAsync(new Empty());
+            issuedReward.Value.ShouldBe(0);
+        }
         private static string GetTokenPairSymbol(string tokenA, string tokenB)
         {
             var symbols = RankSymbols(tokenA, tokenB);
@@ -224,11 +392,11 @@ namespace Awaken.Contracts.Farm
             //AWAKEN
             var result2 = await AdminTokenContractStub.Create.SendAsync(new AElf.Contracts.MultiToken.CreateInput
             {
-                Issuer = AdminAddress,
+                Issuer = FarmContractAddress,
                 Symbol = "AWAKEN",
                 Decimals = 8,
                 IsBurnable = true,
-                TokenName = "DAI symbol",
+                TokenName = "AWAKEN symbol",
                 TotalSupply = 100000000_00000000
             });
 
@@ -313,29 +481,8 @@ namespace Awaken.Contracts.Farm
                 To = UserLilyAddress
             });
      
-            //AWAKEN
-            await AdminTokenContractStub.Issue.SendAsync(new AElf.Contracts.MultiToken.IssueInput
-            {
-                Amount = 100000000000000,
-                Symbol = "AWAKEN",
-                To = AdminAddress
-            });
-            await AdminTokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
-            {
-                Amount = 100000000000,
-                Symbol = "AWAKEN",
-                Memo = "Recharge",
-                To = UserTomAddress
-            });
-              
-            await AdminTokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
-            {
-                Amount = 100000000000,
-                Symbol = "AWAKEN",
-                Memo = "Recharge",
-                To = UserLilyAddress
-            });
             
+
             //LP
             await AdminLpStub.Issue.SendAsync(new IssueInput()
             {
@@ -423,6 +570,23 @@ namespace Awaken.Contracts.Farm
          {
              var blockChain = Application.ServiceProvider.GetRequiredService<IBlockchainService>();
              return AsyncHelper.RunSync(blockChain.GetChainAsync).BestChainHeight;
+         }
+
+         private async Task SkipToBlockHeight(long blockNumber)
+         {
+             var current = await GetCurrentBlockHeight();
+             var span = blockNumber.Sub(current);
+             for (var i = 0; i < span; i++)
+             {
+                 await AdminTokenContractStub.Approve.SendAsync(new AElf.Contracts.MultiToken.ApproveInput()
+                 {
+                     Amount = 1,
+                     Symbol = "ELF",
+                     Spender = UserLilyAddress
+                 });
+             } 
+             current = await GetCurrentBlockHeight();
+             current.ShouldBe(blockNumber);
          }
         
          
