@@ -31,6 +31,12 @@
         <ContractReference Include="..\..\protobuf\token_contract.proto">
             <Link>Protobuf\Proto\reference\token_contract.proto</Link>
         </ContractReference>
+        <ContractReference Include="..\..\protobuf\awaken_swap_contract.proto">
+            <Link>Protobuf\Proto\reference\awaken_swap_contract.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\pool_two_contract.proto">
+            <Link>Protobuf\Proto\reference\pool_two_contract.proto</Link>
+        </ContractReference>
     </ItemGroup>
     <ItemGroup>
         <!-- Reference the protobuf definition of the contract -->

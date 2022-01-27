@@ -14,6 +14,10 @@ namespace Awaken.Contracts.Farm
             set;
         }
         internal Token.TokenContractContainer.TokenContractReferenceState LpTokenContract { get; set; }
+        
+        internal Awaken.Contracts.Swap.AwakenSwapContractContainer.AwakenSwapContractReferenceState RouterContract { get; set; }
+        
+        internal Gandalf.Contracts.PoolTwoContract.PoolTwoContractContainer.PoolTwoContractReferenceState FarmTwoPoolContract { get; set; }
         public SingletonState<Address> Admin { get; set; }
         public SingletonState<Address> Owner { get; set; }
         /// <summary>
@@ -50,8 +54,7 @@ namespace Awaken.Contracts.Farm
         public SingletonState<long> EndBlock { get; set; }
         
         public SingletonState<Address> Tool { get; set; }   
-        public SingletonState<Address> Router { get; set; }  
-        public SingletonState<Address> FarmTwoPool { get; set; }  
+      
         
     }
 }

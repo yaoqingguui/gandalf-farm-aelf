@@ -1,0 +1,246 @@
+/* This files is part of the Hello World smart contract example that is included in Boilerplate.
+ * It is only the definition of the contract, implementation is located in the "contract" folder
+ * and tests are located in the "test" folder.
+ *
+ * You can use this as a basic template for new contracts.
+ * 
+ * When building Boilerplate or the contract project located in the "../contract/Gandalf.Contracts.PoolTwoContract/" 
+ * protoc (the protobuf compiler) will be invoked and this file will produce a .c.cs file and .g.cs file, in the 
+ * "../contract/Gandalf.Contracts.PoolTwoContract/Protobuf/Generated/" folder. 
+ */
+
+// the version of the language, use proto3 for contracts
+syntax = "proto3";
+
+// some core imports for aelf chain types
+import "aelf/core.proto";
+import "aelf/options.proto";
+
+// import for using the google.protobuf.Empty type.
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+// the name of the C# namespace in which the contract code will be,
+// generated code will also be in this namespace.
+option csharp_namespace = "Gandalf.Contracts.PoolTwoContract";
+
+// the contract definition: a gRPC service definition.
+service PoolTwoContract {
+
+  // the full name of the C# class that will contain the state (here <namespace>.<state-class-name> format).
+  option (aelf.csharp_state) = "PoolTwoContractState";
+
+
+  //  Action
+  rpc Initialize(InitializeInput) returns(google.protobuf.Empty){}
+
+  rpc SetHalvingPeriod(google.protobuf.Int64Value) returns (google.protobuf.Empty){}
+
+  rpc SetFarmPoolOne(aelf.Address) returns(google.protobuf.Empty){}
+
+  rpc SetDistributeTokenPerBlock(google.protobuf.Int64Value) returns (google.protobuf.Empty){}
+
+  rpc Add(AddInput) returns(google.protobuf.Empty){}
+
+  rpc Set(SetInput) returns(google.protobuf.Empty){}
+
+  rpc MassUpdatePools(google.protobuf.Empty) returns(google.protobuf.Empty){}
+
+  rpc UpdatePool(google.protobuf.Int32Value) returns(google.protobuf.Empty){}
+
+  rpc ReDeposit(ReDepositInput) returns(google.protobuf.Empty){}
+
+  rpc Deposit(DepositInput) returns(google.protobuf.Empty){}
+
+  rpc Withdraw(WithdrawInput) returns(google.protobuf.Empty){}
+
+  rpc FixEndBlock(google.protobuf.BoolValue) returns(google.protobuf.Empty){}
+
+  //  View
+  rpc PoolLength(google.protobuf.Empty) returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+  }
+
+  rpc Phase(google.protobuf.Int64Value) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+  }
+
+  rpc Reward(google.protobuf.Int64Value) returns(aelf.BigIntValue){
+    option (aelf.is_view) = true;
+  }
+
+  rpc GetDistributeTokenBlockReward(google.protobuf.Int64Value) returns(aelf.BigIntValue){
+    option (aelf.is_view) = true;
+  }
+
+  rpc Pending(PendingInput) returns(aelf.BigIntValue){
+    option (aelf.is_view) = true;
+  }
+
+  rpc UserInfo(UserInfoInput) returns(UserInfoStruct){
+    option (aelf.is_view) = true;
+  }
+
+  rpc StartBlock(google.protobuf.Empty) returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+  }
+
+  rpc DistributeToken(google.protobuf.Empty) returns(google.protobuf.StringValue){
+    option (aelf.is_view) = true;
+  }
+
+  rpc PoolInfo(google.protobuf.Int32Value) returns(PoolInfoStruct){
+    option (aelf.is_view) = true;
+  }
+  
+  rpc TotalAllocPoint(google.protobuf.Empty) returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+  }
+
+  rpc HalvingPeriod(google.protobuf.Empty) returns(google.protobuf.Int64Value){
+    option(aelf.is_view) = true;
+  }
+
+  rpc FarmPoolOne(google.protobuf.Empty) returns(aelf.Address){
+    option (aelf.is_view) = true;
+  }
+
+  rpc TotalReward(google.protobuf.Empty) returns(aelf.BigIntValue){
+    option (aelf.is_view) = true;
+  }
+
+  rpc IssuedReward(google.protobuf.Empty) returns(aelf.BigIntValue){
+    option (aelf.is_view) = true;
+  }
+
+  rpc endBlock(google.protobuf.Empty) returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+  }
+  
+  rpc DistributeTokenPerBlock(google.protobuf.Empty) returns(aelf.BigIntValue){
+    option (aelf.is_view) = true;
+  }
+}
+
+//Input&Output
+message UserInfoInput{
+  int32 pid = 1;
+  aelf.Address user = 2;
+}
+
+message WithdrawInput{
+  int32 pid = 1;
+  aelf.BigIntValue amount = 2;
+}
+
+message DepositInput{
+  int32 pid = 1;
+  aelf.BigIntValue amount = 2;
+}
+
+message ReDepositInput{
+  aelf.BigIntValue amount = 1;
+  aelf.Address user = 2;
+}
+
+message PendingInput{
+  int32 pid = 1;
+  aelf.Address user = 2;
+}
+
+message SetInput{
+  int32 pid = 1;
+  int64 alloc_point = 2;
+  aelf.BigIntValue new_per_block = 3;
+  bool with_update = 4;
+}
+
+message AddInput{
+  int64 alloc_point = 1;
+  string lp_token = 2;
+  bool with_update = 3;
+}
+
+message InitializeInput{
+  string distribute_token = 1;
+  aelf.BigIntValue distribute_Token_Per_Block = 2;
+  int64 halving_period = 3;
+  int64 start_block = 4;
+  aelf.BigIntValue  total_reward = 5;
+  aelf.Address owner = 6;
+}
+
+
+//Struct
+message UserInfoStruct{
+  aelf.BigIntValue amount = 1;
+  aelf.BigIntValue reward_debt = 2;
+}
+
+message PoolInfoStruct{
+  string lp_token = 1;
+  int64 alloc_point = 2;
+  int64 last_reward_block = 3;
+  aelf.BigIntValue acc_distribute_token_per_share = 4;
+  aelf.BigIntValue totalAmount = 5;
+}
+
+message PoolInfo{
+  repeated PoolInfoStruct pool_list = 1;
+}
+
+//Event
+message Deposit{
+  option (aelf.is_event) = true;
+  aelf.Address user = 1 [(aelf.is_indexed) = true];
+  int64 pid = 2 [(aelf.is_indexed) = true];
+  int64 amount = 3;
+}
+
+message Withdraw{
+  option (aelf.is_event) = true;
+  aelf.Address user = 1 [(aelf.is_indexed) = true];
+  int64 pid = 2 [(aelf.is_indexed) = true];
+  int64 amount = 3;
+}
+
+message ClaimRevenue{
+  option (aelf.is_event) = true;
+  aelf.Address user = 1;
+  int32 pid = 2;
+  string token_symbol = 3;
+  int64 token_type = 4;
+  aelf.BigIntValue amount = 5;
+}
+
+message WeightSet{
+  option (aelf.is_event) = true;
+  int64 pid = 1;
+  int64 new_allocation_point = 2;
+}
+
+message PoolAdded{
+  option (aelf.is_event) = true;
+  string token = 1;
+  int64 pid = 2;
+  int64 allocation_point = 3;
+  int64 last_reward_block_height = 4;
+  int64 pool_type = 5;
+}
+
+message DistributeTokenPerBlockSet{
+  option (aelf.is_event) = true;
+  aelf.BigIntValue new_distribute_token_per_block = 1;
+}
+
+message HalvingPeriodSet{
+  option (aelf.is_event) = true;
+  int64 period = 1;
+}
+
+message UpdatePool{
+  option (aelf.is_event) = true;
+  int32 pid = 1;
+  aelf.BigIntValue distribute_token_amount = 2;
+  int64 update_block_height = 3;
+}

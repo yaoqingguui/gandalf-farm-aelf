@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
 using AElf.Types;
@@ -760,6 +761,18 @@ namespace Awaken.Contracts.Farm
              var restReward = State.TotalReward.Value.Sub(State.IssuedReward.Value);
              var blockHeightEnd = GetEndBlock(restReward);
              State.EndBlock.Value = blockHeightEnd;
+         }
+         
+         private string GetTokenPairSymbol(string tokenA, string tokenB)
+         {
+             var symbols = SortSymbols(tokenA, tokenB);
+             return $"ALP {symbols[0]}-{symbols[1]}";
+         }
+
+         private string[] SortSymbols(params string[] symbols)
+         {
+             Assert(symbols.Length == 2, "Invalid symbols for sorting.");
+             return symbols.OrderBy(s => s).ToArray();
          }
     }
     

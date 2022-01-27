@@ -56,8 +56,8 @@ namespace Awaken.Contracts.Farm
         public override Empty SetReDeposit(SetReDepositInput input)
         {
             AssertSenderIsAdmin();
-            State.Router.Value = input.Router;
-            State.FarmTwoPool.Value = input.FarmTwoPool;
+            State.RouterContract.Value = input.Router;
+            State.FarmTwoPoolContract.Value = input.FarmTwoPool;
             return new Empty(); 
         }
 
@@ -128,6 +128,61 @@ namespace Awaken.Contracts.Farm
         {
             AssertSenderIsOwner();
             FixEndBlockInternal(input.Value);
+            return new Empty();
+        }
+        
+        public override Empty DepositLp(DepositLpInput input)
+        {
+            Assert(Context.Self == Context.Sender,"Invalid");
+            if (State.TokenContract.Value == null)
+            {
+                State.TokenContract.Value =
+                    Context.GetContractAddressByName(SmartContractConstants.TokenContractSystemName);
+            }
+
+            var lpBalance = State.LpTokenContract.GetBalance.Call(new Token.GetBalanceInput()
+            {
+                Owner = Context.Self,
+                Symbol = GetTokenPairSymbol(DistributeToken, "ELF")
+            }).Amount;
+            var elfBalance = State.TokenContract.GetBalance.Call(new GetBalanceInput
+            {
+                Symbol = "ELF",
+                Owner = Context.Self
+            }).Balance;
+            var distributeTokenBalanceAfter = State.TokenContract.GetBalance.Call(new GetBalanceInput
+            {
+                Symbol = DistributeToken,
+                Owner = Context.Self
+            }).Balance;
+            if (distributeTokenBalanceAfter > input.DistributeTokenBalance)
+            {
+                DistributeTokenTransfer(input.Sender,distributeTokenBalanceAfter.Sub(input.DistributeTokenBalance));
+            }
+
+            if (elfBalance > input.ElfBalance)
+            {
+                State.TokenContract.Transfer.Send(new TransferInput()
+                {
+                    Amount = elfBalance.Sub(input.ElfBalance),
+                    Symbol = "ELF",
+                    To = input.Sender
+                });
+            }
+            
+            State.LpTokenContract.Approve.Send(new Token.ApproveInput()
+            {
+                Amount = lpBalance,
+                Symbol = GetTokenPairSymbol(DistributeToken, "ELF"),
+                Spender = State.FarmTwoPoolContract.Value
+            });
+            State.FarmTwoPoolContract.Deposit.Send(new Gandalf.Contracts.PoolTwoContract.DepositInput()
+            {
+                Amount = new BigIntValue(lpBalance),
+                Pid = 0
+            });
+            State.RedepositAmount[input.Pid][input.Sender] =
+                input.DistributeTokenAmount.Add(input.DistributeTokenBalance).Sub(distributeTokenBalanceAfter);
             return new Empty();
         }
     }
