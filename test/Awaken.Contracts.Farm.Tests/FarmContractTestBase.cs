@@ -13,9 +13,11 @@ using AElf.ContractTestBase.ContractTestKit;
 using AElf.Kernel.Blockchain.Application;
 using AElf.Kernel.Token;
 using AElf.Standards.ACS0;
+using Awaken.Contracts.Swap;
 using Awaken.Contracts.Token;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Threading;
+using Gandalf.Contracts.PoolTwoContract;
 
 namespace Awaken.Contracts.Farm
 {
@@ -25,6 +27,10 @@ namespace Awaken.Contracts.Farm
         internal readonly Address FarmContractAddress;
         
         internal readonly Address LpTokenContractAddress;
+        
+        internal readonly Address RouterContractAddress;
+        
+        internal readonly Address PoolTwoContractAddress;
         private Address tokenContractAddress => GetAddress(TokenSmartContractAddressNameProvider.StringName);
 
         internal FarmContractContainer.FarmContractStub GetFarmContractStub(ECKeyPair senderKeyPair)
@@ -53,6 +59,12 @@ namespace Awaken.Contracts.Farm
             LpTokenContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
                 KernelConstants.DefaultRunnerCategory,
                 File.ReadAllBytes(typeof(Token.TokenContract).Assembly.Location), SampleAccount.Accounts[0].KeyPair));
+            PoolTwoContractAddress  = AsyncHelper.RunSync(() => DeployContractAsync(
+                KernelConstants.DefaultRunnerCategory,
+                File.ReadAllBytes(typeof(PoolTwoContract).Assembly.Location), SampleAccount.Accounts[0].KeyPair));
+            RouterContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
+                KernelConstants.DefaultRunnerCategory,
+                File.ReadAllBytes(typeof(AwakenSwapContract).Assembly.Location), SampleAccount.Accounts[0].KeyPair));
          
         }
         private async Task<Address> DeployContractAsync(int category, byte[] code, ECKeyPair keyPair)

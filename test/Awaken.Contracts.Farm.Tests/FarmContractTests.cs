@@ -115,6 +115,10 @@ namespace Awaken.Contracts.Farm
            
            userInfo.Amount.ShouldBe(amount);
            balance.Amount.ShouldBe(0);
+
+           await AdminStub.UpdatePool.SendAsync(new Int32Value() {Value = 0});
+           await AdminStub.MassUpdatePools.SendAsync(new Empty());
+           await AdminStub.FixEndBlock.SendAsync(new BoolValue() {Value = false});
         }
         
         [Fact]
@@ -357,6 +361,52 @@ namespace Awaken.Contracts.Farm
 
             var issuedReward = await AdminStub.GetIssuedReward.CallAsync(new Empty());
             issuedReward.Value.ShouldBe(0);
+
+            await AdminStub.GetDistributeTokenBlockReward.CallAsync(new Int64Value() {Value = startBlock.Add(50)});
+        }
+
+        [Fact]
+        public async Task RedepositTest()
+        {
+            await Initialize();
+            var allocPoint = 10;
+            var symbol = GetTokenPairSymbol("ELF", "TEST");
+            await AdminStub.AddPool.SendAsync(new AddPoolInput()
+            {
+                AllocPoint = allocPoint,
+                LpToken = symbol,
+                WithUpdate = false
+            });
+            var amount = 10000000000;
+            await UserTomStub.Deposit.SendAsync(new DepositInput()
+            {
+                Pid = 0,
+                Amount = amount
+            });
+            var startBlock = await AdminStub.GetStartBlockOfDistributeToken.CallAsync(new Empty());
+            var distributeTokenPerBlockConcentratedMining = await AdminStub.GetDistributeTokenPerBlockConcentratedMining.CallAsync(new Empty());
+            var distributeTokenPerBlockContinuousMining = await AdminStub.GetDistributeTokenPerBlockContinuousMining.CallAsync(new Empty());
+            var phase0reward = distributeTokenPerBlockConcentratedMining.Value.Mul(50);
+            var phase1reward = distributeTokenPerBlockContinuousMining.Value.Mul(100);
+            var expectBalance = phase0reward.Add(phase1reward);
+            await SkipToBlockHeight(startBlock.Value.Add(150));
+            await UserTomStub.Withdraw.SendAsync(new WithdrawInput()
+            {
+                Pid = 0,
+                Amount = amount.Div(2)
+            });
+            await AdminStub.SetReDeposit.SendAsync(new SetReDepositInput()
+            {
+                FarmTwoPool = PoolTwoContractAddress,
+                Router = RouterContractAddress
+            });
+
+            await UserTomStub.ReDeposit.SendAsync(new ReDepositInput()
+            {
+                DistributeTokenAmount = 10000000,
+                ElfAmount = 10000000,
+                Pid = 0
+            });
         }
         private static string GetTokenPairSymbol(string tokenA, string tokenB)
         {

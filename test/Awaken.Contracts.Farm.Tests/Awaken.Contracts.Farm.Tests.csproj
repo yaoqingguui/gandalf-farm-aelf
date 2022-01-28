@@ -55,10 +55,18 @@
     <ContractStub Include="..\..\protobuf\farm_contract.proto">
       <Link>Protobuf\Proto\farm_contract.proto</Link>
     </ContractStub>
+    <ContractStub Include="..\..\protobuf\awaken_swap_contract.proto">
+      <Link>Protobuf\Proto\awaken_swap_contract.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\pool_two_contract.proto">
+      <Link>Protobuf\Proto\pool_two_contract.proto</Link>
+    </ContractStub>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\contract\Awaken.Contracts.Farm\Awaken.Contracts.Farm.csproj" />
+    <ProjectReference Include="..\..\contract\Awaken.Contracts.PoolTwoContract\Awaken.Contracts.PoolTwoContract.csproj" />
+    <ProjectReference Include="..\..\contract\Awaken.Contracts.Swap\Awaken.Contracts.Swap.csproj" />
     <ProjectReference Include="..\..\contract\Awaken.Contracts.Token\Awaken.Contracts.Token.csproj" />
     <ProjectReference Include="..\..\src\AElf.Boilerplate.TestBase\AElf.Boilerplate.TestBase.csproj" />
   </ItemGroup>
