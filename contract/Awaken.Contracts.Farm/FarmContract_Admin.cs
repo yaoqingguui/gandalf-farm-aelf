@@ -92,6 +92,7 @@ namespace Awaken.Contracts.Farm
                 TotalAmount = 0,
                 LastAccLockDistributeTokenPerShare = 0
             };
+            State.PoolLength.Value = State.PoolLength.Value.Add(1);
             Context.Fire(new PoolAdded()
             {
                 Pid = index,
@@ -183,6 +184,22 @@ namespace Awaken.Contracts.Farm
             });
             State.RedepositAmount[input.Pid][input.Sender] =
                 input.DistributeTokenAmount.Add(input.DistributeTokenBalance).Sub(distributeTokenBalanceAfter);
+            return new Empty();
+        }
+
+        public override Empty SetWeight(SetWeightInput input)
+        {
+            AssertSenderIsAdmin();
+            if (input.WithUpdate) {
+                MassUpdatePools(new Empty());
+            }
+            State.TotalAllocPoint.Value = State.TotalAllocPoint.Value.Sub(State.PoolInfoMap[input.Pid].AllocPoint).Add(input.AllocPoint);
+            State.PoolInfoMap[input.Pid].AllocPoint = input.AllocPoint;
+            Context.Fire(new WeightSet()
+            {
+                Pid = input.Pid,
+                NewAllocationPoint = input.AllocPoint
+            });
             return new Empty();
         }
     }
