@@ -33,26 +33,66 @@ service FarmContract {
     //self action
     rpc DepositLp(DepositLpInput) returns(google.protobuf.Empty) {}
     // view 
-    rpc Pending(PendingInput) returns(PendingOutput){}
-    rpc GetReDepositLimit(GetReDepositLimitInput) returns(google.protobuf.Int64Value){}   
-    rpc GetDistributeTokenBlockReward(google.protobuf.Int64Value) returns (GetDistributeTokenBlockRewardOutput) {}
-    rpc PendingLockDistributeToken(PendingLockDistributeTokenInput)returns(google.protobuf.Int64Value){}
-    rpc GetAdmin(google.protobuf.Empty) returns (aelf.Address) {}      
-    rpc GetOwner(google.protobuf.Empty) returns (aelf.Address) {}      
-    rpc GetStartBlockOfDistributeToken(google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
-    rpc GetDistributeTokenPerBlockConcentratedMining (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
-    rpc GetDistributeTokenPerBlockContinuousMining (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
-    rpc GetUsdtPerBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){}  
-    rpc GetUsdtStartBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){}  
-    rpc GetUsdtEndBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){}  
-    rpc GetCycle (google.protobuf.Empty) returns (google.protobuf.Int64Value){}  
-    rpc GetHalvingPeriod0(google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
-    rpc GetHalvingPeriod1 (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
-    rpc GetTotalReward  (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
-    rpc GetIssuedReward (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
-    rpc GetEndBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){}   
-    rpc GetUserInfo(GetUserInfoInput) returns (UserInfo){} 
-    rpc GetPoolInfo(google.protobuf.Int32Value) returns (PoolInfo){}                                                          
+    rpc Pending(PendingInput) returns(PendingOutput){
+    option (aelf.is_view) = true;
+    }
+    rpc GetReDepositLimit(GetReDepositLimitInput) returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }   
+    rpc GetDistributeTokenBlockReward(google.protobuf.Int64Value) returns (GetDistributeTokenBlockRewardOutput) {
+    option (aelf.is_view) = true;
+    }
+    rpc PendingLockDistributeToken(PendingLockDistributeTokenInput)returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }
+    rpc GetAdmin(google.protobuf.Empty) returns (aelf.Address) {
+    option (aelf.is_view) = true;
+    }      
+    rpc GetOwner(google.protobuf.Empty) returns (aelf.Address) {
+    option (aelf.is_view) = true;
+    }      
+    rpc GetStartBlockOfDistributeToken(google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }   
+    rpc GetDistributeTokenPerBlockConcentratedMining (google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }   
+    rpc GetDistributeTokenPerBlockContinuousMining (google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }   
+    rpc GetUsdtPerBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }  
+    rpc GetUsdtStartBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }  
+    rpc GetUsdtEndBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }  
+    rpc GetCycle (google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }  
+    rpc GetHalvingPeriod0(google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }   
+    rpc GetHalvingPeriod1 (google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }   
+    rpc GetTotalReward  (google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }   
+    rpc GetIssuedReward (google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }   
+    rpc GetEndBlock (google.protobuf.Empty) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }   
+    rpc GetUserInfo(GetUserInfoInput) returns (UserInfo){
+    option (aelf.is_view) = true;
+    } 
+    rpc GetPoolInfo(google.protobuf.Int32Value) returns (PoolInfo){
+    option (aelf.is_view) = true;
+    }                                                          
 }
 
 // input 
