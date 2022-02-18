@@ -45,3 +45,4 @@ jobs:
           .\.sonar\scanner\dotnet-sonarscanner begin /k:"yaoqingguui_gandalf-farm-aelf" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
           dotnet build /clp:ErrorsOnly /p:GeneratePackageOnBuild=false -v quiet "Awaken.Contracts.Farm.sln"
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+
