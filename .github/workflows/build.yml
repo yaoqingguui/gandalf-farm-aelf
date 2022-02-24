@@ -46,3 +46,4 @@ jobs:
           # dotnet build /clp:ErrorsOnly /p:GeneratePackageOnBuild=false -v quiet "Awaken.Contracts.Farm.sln"
           dotnet build
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+
